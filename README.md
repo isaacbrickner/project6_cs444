@@ -18,6 +18,8 @@ Command line:
 * `block.c` the block file reads/writes a block of data passed in (example in test)
 * `block.h` header file for `block.c`
 * `testfs.c` testing file for functionality of the VVSFS
+* `pack.c`
+  * `pack.h` helper funtions to read and write inodes
 
 ## Data
 Reading and writing blocks of 4096 bytes to disk. 
@@ -25,6 +27,16 @@ Reading and writing blocks of 4096 bytes to disk.
 ## Functions
 
 * All executed in main testing environment
+* `ialloc` allocates an inode
+- `alloc` allocates a block
+- `read_inode` read an inode from the disk
+- `write_inode` write an inode to the disk
+- `read_inode` reads an inode from the disk
+- `incore_find` find an inode from incore table
+- `incore_free_all` frees all incore inodes
+- `incore_find_free` finds a free inode from incore table
+- `iget` gets inode from incore table and can load from disk
+- `iput` puts an inode back to incore table and writes to disk
 * `find_free` finds a bit set to 0 and returns the index of the assigned block number
 * `set_free` sets a passed in block's bit to the specific  `set` value specified
 * `find_clear_low_bit` helper function from Beej to find the lowest clear bit
@@ -36,5 +48,5 @@ Reading and writing blocks of 4096 bytes to disk.
 * `test_img_fd_init` test to ensure initial image_fd is set to -1
 * `test_image_fd_gets_set` test to test to see if image_fd is set to valid (open) fd
 
-## Notes
 # project6_cs444
+# proj7_inode_support

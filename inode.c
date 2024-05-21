@@ -20,7 +20,7 @@ struct inode *ialloc(unsigned char *inode_map)
     int i = find_free(inode_map);
     if (i == -1)
     {
-        return -1;
+        return NULL;
     }
     // get incore version of inode
     struct inode *in = iget(i);
@@ -42,19 +42,6 @@ struct inode *ialloc(unsigned char *inode_map)
     return in;
 }
 
-
-
-
-struct inode *incore_find_free(void) {
-
-    for (int i = 0; i < MAX_SYS_OPEN_FILES; i++){
-        if (incore[i].ref_count == 0){
-            return &incore[i];
-        }
-    }
-return NULL;
-}
-
 struct inode *incore_find(unsigned int inode_num) {
 
        for (int i = 0; i < MAX_SYS_OPEN_FILES; i++) {
@@ -71,6 +58,19 @@ void incore_free_all(void){
         incore[i].ref_count = 0;
     }
 }
+
+
+struct inode *incore_find_free(void) {
+
+    for (int i = 0; i < MAX_SYS_OPEN_FILES; i++){
+        if (incore[i].ref_count == 0){
+            return &incore[i];
+        }
+    }
+return NULL;
+}
+
+
 
 // void read_inode(struct inode *in, int inode_num): This takes a pointer to an empty struct inode that you're going to read the data into. The inode_num is the number of the inode you wish to read from disk.
 
@@ -91,6 +91,29 @@ void incore_free_all(void){
 //     unsigned int ref_count;  // in-core only
 //     unsigned int inode_num;  // in-core only
 // };
+
+void write_inode(struct inode *in){
+    // get offsets
+    int block_num = in->inode_num / INODES_PER_BLOCK + INODE_FIRST_BLOCK;
+    int block_offset = in->inode_num % INODES_PER_BLOCK;
+    int block_offset_bytes = block_offset * INODE_SIZE;
+
+
+    // map write to inode
+    unsigned char block[BLOCK_SIZE];
+    bread(block_num, block);
+
+    write_u32(&block[block_offset_bytes], in->size);
+    write_u16(&block[block_offset_bytes + 4], in->owner_id);
+    write_u8(&block[block_offset_bytes + 6], in->permissions);
+    write_u8(&block[block_offset_bytes + 7], in->flags);
+    write_u8(&block[block_offset_bytes + 8], in->link_count);
+
+    for (int i = 0; i < INODE_PTR_COUNT; i++) {
+        write_u16(&block[block_offset_bytes + 9 + i * 2], in->block_ptr[i]);
+    }
+    bwrite(block_num, block);
+}
 
 void read_inode(struct inode *in, int inode_num) {
     // get offsets 
@@ -115,28 +138,7 @@ void read_inode(struct inode *in, int inode_num) {
 }
 
 
-void write_inode(struct inode *in){
-    // get offsets
-    int block_num = in->inode_num / INODES_PER_BLOCK + INODE_FIRST_BLOCK;
-    int block_offset = in->inode_num % INODES_PER_BLOCK;
-    int block_offset_bytes = block_offset * INODE_SIZE;
 
-
-    // map write to inode
-    unsigned char block[BLOCK_SIZE];
-    bread(block_num, block);
-
-    write_u32(&block[block_offset_bytes], in->size);
-    write_u16(&block[block_offset_bytes + 4], in->owner_id);
-    write_u8(&block[block_offset_bytes + 6], in->permissions);
-    write_u8(&block[block_offset_bytes + 7], in->flags);
-    write_u8(&block[block_offset_bytes + 8], in->link_count);
-
-    for (int i = 0; i < INODE_PTR_COUNT; i++) {
-        write_u16(&block[block_offset_bytes + 9 + i * 2], in->block_ptr[i]);
-    }
-    bwrite(block_num, block);
-}
 
 
 // The algorithm is this:

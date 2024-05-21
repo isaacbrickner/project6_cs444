@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -DCTEST_ENABLE
 LIB = libvvsfs.a test_open_img.txt
-SRCS = image.c block.c testfs.c free.c inode.c    # Add new source files here
+SRCS = image.c block.c testfs.c free.c inode.c pack.c   # Add new source files here
 OBJS = $(SRCS:.c=.o)
 EXEC = testfs
 
@@ -9,7 +9,7 @@ EXEC = testfs
 
 all: $(EXEC)
 
-$(EXEC): $(OBJS) $(LIB)
+$(EXEC): $(OBJS) testfs.o $(LIB)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(LIB): $(OBJS)
@@ -23,3 +23,4 @@ clean:
 
 pristine: clean
 	rm -f $(EXEC) $(LIB)
+	

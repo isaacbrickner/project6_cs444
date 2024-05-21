@@ -103,15 +103,17 @@ void write_inode(struct inode *in){
     unsigned char block[BLOCK_SIZE];
     bread(block_num, block);
 
-    write_u32(&block[block_offset_bytes], in->size);
-    write_u16(&block[block_offset_bytes + 4], in->owner_id);
-    write_u8(&block[block_offset_bytes + 6], in->permissions);
-    write_u8(&block[block_offset_bytes + 7], in->flags);
-    write_u8(&block[block_offset_bytes + 8], in->link_count);
+    unsigned char *blockAddress = block + (block_offset_bytes * INODE_SIZE);
+    write_u32(blockAddress, in->size);
+    write_u16(blockAddress + 4, in->owner_id);
+    write_u8(blockAddress + 6, in->permissions);
+    write_u8(blockAddress + 7, in->flags);
+    write_u8(blockAddress + 8, in->link_count);
 
     for (int i = 0; i < INODE_PTR_COUNT; i++) {
-        write_u16(&block[block_offset_bytes + 9 + i * 2], in->block_ptr[i]);
+        write_u16(blockAddress + 9 + (i * 2), in->block_ptr[i]);
     }
+
     bwrite(block_num, block);
 }
 
@@ -124,21 +126,22 @@ void read_inode(struct inode *in, int inode_num) {
     // map read info into inode
     unsigned char block[BLOCK_SIZE];
     bread(block_num, block);
+    unsigned char *blockAddress = block + (block_offset_bytes * INODE_SIZE);
 
-    in->size = read_u32(&block[block_offset_bytes]);
-    in->owner_id = read_u16(&block[block_offset_bytes + 4]);
-    in->permissions = read_u8(&block[block_offset_bytes + 6]);
-    in->flags = read_u8(&block[block_offset_bytes + 7]);
-    in->link_count = read_u8(&block[block_offset_bytes + 8]);
-    for (int i = 0; i < INODE_PTR_COUNT; i++){
-        in->block_ptr[i] = read_u16(&block[block_offset_bytes + 9 + i * 2]);
+    in->size = read_u32(blockAddress);
+    in->owner_id = read_u16(blockAddress + 4);
+    in->permissions = read_u8(blockAddress + 6);
+    in->flags = read_u8(blockAddress + 7);
+    in->link_count = read_u8(blockAddress + 8);
+
+
+    for (int i = 0; i < INODE_PTR_COUNT; i++) {
+        in->block_ptr[i] = read_u16(blockAddress + 9 + (i * 2));
     }
+
     in->ref_count = 1;
     in->inode_num = inode_num;
 }
-
-
-
 
 
 // The algorithm is this:
